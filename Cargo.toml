@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "qbittorrent-rust",
-    "proc_macros",
+    "proc-macros",
 ]
 
 [profile.dev.build-override]
