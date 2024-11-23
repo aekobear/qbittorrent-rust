@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "qbittorrent-rust",
+    "proc_macros",
+]
+
+[profile.dev.build-override]
+opt-level = 3
