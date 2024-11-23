@@ -1,6 +1,0 @@
-[submodule "qbittorrent-rust"]
-	path = qbittorrent-rust
-	url = ./qbittorrent-rust/
-[submodule "proc-macros"]
-	path = proc-macros
-	url = ./proc-macros/
