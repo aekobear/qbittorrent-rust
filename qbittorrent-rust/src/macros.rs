@@ -220,3 +220,15 @@ macro_rules! request_error_focus {
         })
     };
 }
+
+#[macro_export]
+macro_rules! hashmap {
+    ($(($value1:expr, $value2:expr)),*) => {{
+        let mut hashmapp = HashMap::new();
+        $(
+            hashmapp.insert($value1, $value2);
+        )*
+
+        hashmapp
+    }};
+}

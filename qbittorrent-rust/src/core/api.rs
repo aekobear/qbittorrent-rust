@@ -2,7 +2,7 @@ use std::{collections::HashMap, hash::Hash, sync::Arc};
 
 use reqwest::{header::COOKIE, Client};
 use serde::Serialize;
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock};
 
 use crate::{core::cookie::Cookie, code, error_handling::error_type::ErrorType};
 
@@ -15,6 +15,7 @@ pub struct Api {
     pub(crate) cookie: Arc<RwLock<Cookie>>,
     pub(crate) reqwest_client: Client,
     credentials: Credentials,
+    cookie_hold: Arc<Mutex<bool>>
 }
 
 impl Api {
@@ -33,21 +34,36 @@ impl Api {
             cookie,
             reqwest_client,
             credentials,
+            cookie_hold: Arc::new(Mutex::new(false))
         })
     }
 
     pub async fn get_cookie(&mut self) -> Result<String, Error> {
-        let x = self.cookie.clone();
+        let read_lock = self.cookie.read().await;
 
-        let mut lock = x.write().await;
+        let res: String;
 
-        lock.reset(&self.authority, &self.reqwest_client, &self.credentials).await?;
-
-        let cookie = lock.cookie.clone();
-
-        drop(lock);
-        
-        Ok(cookie)
+        if read_lock.is_expired() {
+            let hold_cookie = self.cookie_hold.clone();
+            let mut hold_cookie = hold_cookie.lock().await;
+            if read_lock.is_expired() && *hold_cookie == false {
+                *hold_cookie = true;
+                drop(read_lock);
+                let cookie = self.cookie.clone();
+                let mut cookie = cookie.write().await;
+                cookie.reset(&self.authority, &self.reqwest_client, &self.credentials).await?;
+                res = (&*cookie.cookie).to_string();
+                drop(cookie);
+                *hold_cookie = false;
+            } else {
+                res = self.cookie.clone().read().await.cookie.clone();
+            }
+            drop(hold_cookie);
+        } else {
+            drop(read_lock);
+            res = self.cookie.clone().read().await.cookie.clone();
+        }
+        Ok(res)
     }
 
     pub(crate) async fn make_request<T: Into<String>, S: Into<String>>(&mut self, url: T, custom_error: S) -> Result<String, crate::Error> {
@@ -72,12 +88,11 @@ impl Api {
                 .await
                 .map_err(|e| Error::build(ErrorType::ReqwestError(Box::new(e)), None))?;
 
-            // Handle the response
             if response.status().is_success() {
                 let text = response.text().await.map_err(|e| Error::build(ErrorType::ReqwestError(Box::new(e)), None))?;
                 Ok(text)
             } else {
-                Err(Error::build(ErrorType::MiscError(format!("something went wrong. function name: {}", custom_error.into())), Some(response.status().as_u16())))
+                Err(Error::build(ErrorType::MiscError(format!("function name: {}", custom_error.into())), Some(response.status().as_u16())))
             }
     }
 

@@ -114,3 +114,15 @@ fn option_inner_type(path: &Path) -> Option<&Type> {
         _ => None,
     }
 }
+
+#[proc_macro_attribute]
+pub fn experimental(_: TokenStream, item: TokenStream) -> TokenStream {
+    let item = parse_macro_input!(item as syn::Item); // Convert to proc_macro2::TokenStream
+    let output = quote! {
+        #[doc = "⚠️ Experimental: This feature is still experimental in the qbittorrent webAPI."]
+        #[doc = ""]
+        #[doc = ""]
+        #item
+    };
+    output.into()
+}

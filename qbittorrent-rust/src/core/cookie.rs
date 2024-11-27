@@ -52,7 +52,7 @@ pub(crate) struct Cookie {
             return Err(Error::build(ErrorType::MiscError("Something went wrong while getting the auth cookie.".to_string()), code!(response)))
         }
     }
-
+    
     /// checks if the `Cookie` expired.
     /// 
     /// # FUNCTIONING
