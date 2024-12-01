@@ -1,7 +1,7 @@
 use std::{cell::OnceCell, vec};
 
 #[derive(Debug, Clone)]
-pub struct SepVec<T: Clone, U: Clone + Into<String>> {
+pub(crate) struct SepVec<T: Clone, U: Clone + Into<String>> {
     vector: Vec<T>,
     separator: OnceCell<U>,
 }
@@ -9,7 +9,7 @@ impl<T: Clone, U: Clone> SepVec<T, U>
 where
     String: From<U>,
 {
-    pub fn new<I>(starting: I, separator: U) -> Self
+    pub(crate) fn new<I>(starting: I, separator: U) -> Self
     where
         I: IntoIterator,
         Vec<T>: FromIterator<<I as IntoIterator>::Item>,
@@ -24,15 +24,15 @@ where
         }
     }
 
-    pub fn len_vector(&self) -> usize {
+    pub(crate) fn len_vector(&self) -> usize {
         self.vector.len()
     }
 
-    pub fn len_total(&self) -> usize {
+    pub(crate) fn len_total(&self) -> usize {
         (self.vector.len()*2)-1
     }
 
-    pub fn inner_vec(&self) -> Vec<T> {
+    pub(crate) fn inner_vec(&self) -> Vec<T> {
         self.vector.clone()
     }
 }

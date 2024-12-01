@@ -4,13 +4,17 @@ use reqwest::{header::COOKIE, Client};
 use serde::Serialize;
 use tokio::sync::{Mutex, RwLock};
 
-use crate::{core::cookie::Cookie, code, error_handling::error_type::ErrorType};
+use crate::{code, core::cookie::Cookie, error_handling::error_type::ErrorType, post_request_no_return};
 
 use super::creds::Credentials;
 use crate::error_handling::errors::Error;
 
+///## Description
+/// the main struct of the library.
+/// each API-related method is listed as its category, followed by its name: `$category$_$name_of_the_method$`. 
+/// For more info about categories, look at the main library description.
 #[derive(Debug, Clone)]
-pub struct Api {
+pub struct QbitApi {
     pub(crate) authority: String,
     pub(crate) cookie: Arc<RwLock<Cookie>>,
     pub(crate) reqwest_client: Client,
@@ -18,18 +22,28 @@ pub struct Api {
     cookie_hold: Arc<Mutex<bool>>
 }
 
-impl Api {
-    pub async fn new<'a, T>(authority: &'a T, credentials: Credentials) -> Result<Self, Error> 
-    where 
-        T: ?Sized,
-        String: From<&'a T>
-    {
-        let authority = Into::<String>::into(authority) as String;
+impl QbitApi {
+    /// ## Usage
+    /// 
+    /// creates a new instance of [`QbitApi`].
+    /// 
+    /// ## Arguments
+    /// 
+    /// authority: the authority for the Qbittorrent WebUI API. eg: `"http://localhost:6011/"`
+    /// credentials: the credentials to the account.
+    /// 
+    /// ## Example
+    /// ```
+    /// let qbit_api = QbitApi::new("http://localhost:6011///////", Credentials::new("user_name", "password")).await.unwrap();
+    /// ```
+    pub async fn new(authority: impl AsRef<str>, credentials: Credentials) -> Result<Self, Error> {
+        let s = authority.as_ref();
+        let authority = Into::<String>::into(s) as String;
         let authority =  authority.chars().rev().skip_while(|s| *s as u8 == 47).clone().map(|k| k.to_string()).collect::<Vec<String>>().into_iter().rev().collect::<String>();
         //println!("{}", authority);
         let reqwest_client = Client::new();
         let cookie = Arc::new(RwLock::new(Cookie::new(&authority, &reqwest_client, &credentials).await?));
-        return Ok(Api {
+        return Ok(QbitApi {
             authority,
             cookie,
             reqwest_client,
@@ -38,7 +52,7 @@ impl Api {
         })
     }
 
-    pub async fn get_cookie(&mut self) -> Result<String, Error> {
+    pub(crate) async fn get_cookie(&mut self) -> Result<String, Error> {
         let read_lock = self.cookie.read().await;
 
         let res: String;
@@ -114,6 +128,8 @@ impl Api {
                 Err(Error::build(ErrorType::MiscError(format!("something went wrong. function name: {}", custom_error.into())), code!(response)))
             }
     }
+
+    post_request_no_return!(logout, "/auth/logout");
 }
 
 
@@ -124,7 +140,7 @@ mod tests {
 
     use crate::core::creds::Credentials;
 
-    use super::Api;
+    use super::QbitApi;
 
     #[test]
     fn test() {
@@ -135,7 +151,7 @@ mod tests {
 
     #[tokio::test]
     async fn test2() {
-        let api = Api::new("http://localhost:6011///////", Credentials::new("admin", "123456")).await.unwrap();
+        let api = QbitApi::new("http://localhost:6011///////", Credentials::new("admin", "123456")).await.unwrap();
         println!("{:?}", api)
     }
 }

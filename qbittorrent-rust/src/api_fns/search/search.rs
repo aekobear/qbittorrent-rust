@@ -4,7 +4,7 @@ use serde::Serialize;
 use serde_json::Value;
 
 use crate::{
-    core::api::Api, error_handling::error_type::ErrorType, hashmap, misc::sep_vec::SepVec,
+    core::api::QbitApi, error_handling::error_type::ErrorType, hashmap, misc::sep_vec::SepVec,
     request_error_focus, Error,
 };
 
@@ -99,7 +99,7 @@ pub enum Categories {
     Custom(Vec<String>),
 }
 
-impl Api {
+impl QbitApi {
     pub async fn search_get_search_plugins_raw(&mut self) -> Result<String, crate::Error> {
         self.make_request("/search/plugins", "search_get_search_plugins_raw")
             .await
@@ -399,7 +399,7 @@ impl Api {
 
 #[tokio::test]
 async fn get_test() {
-    let mut api = Api::new(
+    let mut api = QbitApi::new(
         "http://localhost:6011/",
         crate::core::creds::Credentials {
             username: "admin".to_string(),

@@ -6,72 +6,96 @@ use reqwest::header;
 use tokio::{fs::File, io::AsyncReadExt};
 
 use crate::{
-    core::api::Api, code, error_handling::{errors::Error, error_type::ErrorType}, misc::sep_vec::SepVec
+    core::api::QbitApi, code, error_handling::{errors::Error, error_type::ErrorType}, misc::sep_vec::SepVec
 };
 
 use super::torrents::Torrent;
 
+/// ## Info
+/// struct that describes the adding of a torrent.
+/// create a new [`TorrentAddDescriptor`] by either:
+/// - using the `new` function;
+/// - using the `builder` function; if you use this option, remember to always set the `torrents`. 
 #[derive(Debug, Clone)]
 pub struct TorrentAddDescriptor {
-    pub urls: SepVec<String, String>,
+    urls: SepVec<String, String>,
 
-    pub paths: Vec<String>,
+    paths: Vec<String>,
 
     /// Download folder path
-    pub savepath: Option<String>,
+    savepath: Option<String>,
 
     /// Cookie sent to download the .torrent file
-    pub cookie: Option<String>,
+    cookie: Option<String>,
 
     /// Category for the torrent
-    pub category: Option<String>,
+    category: Option<String>,
 
     /// Tags for the torrent, separated by commas
-    pub tags: Option<SepVec<String, char>>,
+    tags: Option<SepVec<String, char>>,
 
     /// Skip hash checking (true, false)
-    pub skip_checking: Option<bool>,
+    skip_checking: Option<bool>,
 
     /// Add torrents in a paused state (true, false)
-    pub paused: Option<bool>,
+    paused: Option<bool>,
 
     /// Create the root folder (true, false, or unset)
-    pub root_folder: Option<String>,
+    root_folder: Option<String>,
 
     /// Rename the torrent
-    pub rename: Option<String>,
+    rename: Option<String>,
 
     /// Set torrent upload speed limit in bytes per second
-    pub up_limit: Option<u64>,
+    up_limit: Option<u64>,
 
     /// Set torrent download speed limit in bytes per second
-    pub dl_limit: Option<u64>,
+    dl_limit: Option<u64>,
 
     /// Set torrent share ratio limit (since qBittorrent v2.8.1)
-    pub ratio_limit: Option<f32>,
+    ratio_limit: Option<f32>,
 
     /// Set torrent seeding time limit in minutes (since qBittorrent v2.8.1)
-    pub seeding_time_limit: Option<u32>,
+    seeding_time_limit: Option<u32>,
 
     /// Use Automatic Torrent Management
-    pub auto_tmm: Option<bool>,
+    auto_tmm: Option<bool>,
 
     /// Enable sequential download (true, false)
-    pub sequential_download: Option<bool>,
+    sequential_download: Option<bool>,
 
     /// Prioritize first and last piece download (true, false)
-    pub first_last_piece_prio: Option<bool>,
+    first_last_piece_prio: Option<bool>,
 }
 impl TorrentAddDescriptor {
-    pub fn new(torrents: Vec<Torrent>) -> Self {
-        Self::builder().torrents(torrents).build().unwrap()
+    /// ## Usage
+    /// creates a new instance of [`TorrentAddDescriptor`].
+    /// 
+    /// ## Warning
+    /// the `torrents` argument mustn't be an empty vector. The if it is, the function will return an [`Error`] with error type [`ErrorType::TorrentsNotSet`]
+    pub fn new(torrents: Vec<Torrent>) -> Result<Self, Error> {
+        Self::builder(torrents).build()
     }
 
-    pub fn builder() -> TorrentAddDescriptorBuilder {
-        TorrentAddDescriptorBuilder::new()
+    /// ## Usage
+    /// returns a new instance of [`TorrentAddDescriptorBuilder`]: the builder for [`TorrentAddDescriptor`].
+    ///
+    /// ## Warning
+    /// the argument `torrents` mustn't be empty, or the `build` function for the [`TorrentAddDescriptor`] struct will return an [`Error`] with error type [`ErrorType::TorrentsNotSet`]
+    pub fn builder(torrents: Vec<Torrent>) -> TorrentAddDescriptorBuilder {
+        TorrentAddDescriptorBuilder::new(torrents)
     }
 }
 
+/// ## Info
+/// the builder struct for [`TorrentAddDescriptor`].
+/// 
+/// ## Usage
+/// call its methods and set the various fields.
+/// Once you're done, call `build()`
+/// 
+/// ## Warning
+/// - The `torrents` field is a vector, so it could be put as empty. Although, this isn't supported, and when `build()` is called, it will return an [`Error`] with error type: [`ErrorType::TorrentsNotSet`]
 #[derive(Debug, Clone, Builder)]
 pub struct TorrentAddDescriptorBuilder {
     pub torrents: Option<Vec<Torrent>>,
@@ -95,7 +119,7 @@ pub struct TorrentAddDescriptorBuilder {
     pub paused: Option<bool>,
 
     /// Create the root folder (true, false, or unset)
-    pub root_folder: Option<String>,
+    pub root_folder: Option<bool>,
 
     /// Rename the torrent
     pub rename: Option<String>,
@@ -112,7 +136,7 @@ pub struct TorrentAddDescriptorBuilder {
     /// Set torrent seeding time limit in minutes (since qBittorrent v2.8.1)
     pub seeding_time_limit: Option<u32>,
 
-    /// Use Automatic Torrent Management
+    /// doc
     pub auto_tmm: Option<bool>,
 
     /// Enable sequential download (true, false)
@@ -122,9 +146,15 @@ pub struct TorrentAddDescriptorBuilder {
     pub first_last_piece_prio: Option<bool>,
 }
 impl TorrentAddDescriptorBuilder {
-    pub fn new() -> Self {
+    ///## Info 
+    /// 
+    /// creates a new instance of [`TorrentAddDescriptorBuilder`].
+    /// 
+    /// ## Warning
+    /// if `torrents` is set as an empty vector, the `build` function will return an [`Error`] with error type [`ErrorType::TorrentsNotSet`]
+    pub fn new(torrents: Vec<Torrent>) -> Self {
         Self {
-            torrents: None,
+            torrents: Some(torrents),
             savepath: None,
             cookie: None,
             category: None,
@@ -143,11 +173,11 @@ impl TorrentAddDescriptorBuilder {
         }
     }
 
-    /// # Info
+    /// ## Info
     /// returns the finalized [`TorrentAddDescriptor`].
     ///
-    /// # Errors
-    /// - if no torrents were set, it will return [`Error::ApiError(ApiErrors::TorrentError(TorrentErrors::TorrentsNotSet))`]. there MUST be soemthing to send. An empty vector is NOT okay.
+    /// ## Errors
+    /// - if the `torrent`s vector was set as empty, it will return an [`Error`] with error type [`ErrorType::TorrentsNotSet`].
     pub fn build(self) -> Result<TorrentAddDescriptor, Error> {
         let (urls, paths) = match self.torrents {
             Some(t) => {
@@ -178,6 +208,12 @@ impl TorrentAddDescriptorBuilder {
 
         let tags = self.tags.and_then(|v| Some(SepVec::new(v, ',')));
 
+        let root_folder = match self.root_folder {
+            None => String::from("unset"),
+            Some(true) => String::from("true"),
+            Some(false) => String::from("false"),
+        };
+
         Ok(TorrentAddDescriptor {
             urls,
             paths,
@@ -187,7 +223,7 @@ impl TorrentAddDescriptorBuilder {
             tags: tags,
             skip_checking: self.skip_checking,
             paused: self.paused,
-            root_folder: self.root_folder,
+            root_folder: Some(root_folder),
             rename: self.rename,
             up_limit: self.up_limit,
             dl_limit: self.dl_limit,
@@ -200,8 +236,10 @@ impl TorrentAddDescriptorBuilder {
     }
 }
 
-impl Api {
-    pub async fn add_torrent(&mut self, descriptor: impl Borrow<TorrentAddDescriptor>) -> Result<(), Error> {
+impl QbitApi {
+    ///## Usage
+    /// adds one (or more) torrents.
+    pub async fn torrents_add_torrent(&mut self, descriptor: impl Borrow<TorrentAddDescriptor>) -> Result<(), Error> {
         let descriptor = descriptor.borrow();
 
         match (
@@ -411,4 +449,5 @@ async fn torrents_part(
 
 #[test]
 fn aaaa() {
+    //TorrentAddDescriptor::builder().auto_tmm(true);
 }

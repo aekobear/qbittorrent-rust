@@ -4,7 +4,7 @@ use proc_macros::{experimental, Builder};
 use serde::Serialize;
 use serde_json::Value;
 
-use crate::{core::api::Api, error_handling::error_type::ErrorType, hashmap, request_error_focus, Error};
+use crate::{core::api::QbitApi, error_handling::error_type::ErrorType, hashmap, request_error_focus, Error};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct RssAutoDownloadRule {
@@ -52,7 +52,7 @@ pub struct RssAutoDownloadRuleBuilder{
     }
 }
 
-impl Api {
+impl QbitApi {
     #[experimental]
     pub async fn rss_add_folder(&mut self, path: impl Into<String>) -> Result<(), Error> {
         let path: String = path.into();

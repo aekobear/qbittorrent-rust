@@ -1,7 +1,7 @@
 use serde_json::Value;
 
 use crate::error_handling::error_type::ErrorType;
-use crate::{core::api::Api, Error};
+use crate::{core::api::QbitApi, Error};
 
 use std::borrow::Borrow;
 use std::collections::HashMap;
@@ -850,7 +850,7 @@ impl QBittorrentConfigBuilder {
     pub fn proxy_type(mut self, value: i32) -> Self {
         match value {
             -1 | 1 | 2 | 3 | 4 | 5 => {}
-            _ => panic!("value not in the expected range. (prozy type)"),
+            _ => panic!("value not in the expected range. (proxy type)"),
         }
 
         self.config.proxy_type = Some(value);
@@ -1287,15 +1287,15 @@ impl QBittorrentConfigBuilder {
     }
 }
 
-impl Api {
-    pub async fn get_preferences(&mut self) -> Result<Value, Error> {
+impl QbitApi {
+    pub async fn app_get_preferences(&mut self) -> Result<Value, Error> {
         serde_json::from_str(Self::get_preferences_raw(self).await?.as_str())
             .map_err(|e| Error::build(ErrorType::JsonSerdeError(Box::new(e)), None))
     }
 
     crate::post_request!(get_preferences_raw, "/app/preferences");
 
-    pub async fn set_preferences(&mut self, config: impl Borrow<QBittorrentConfig>) -> Result<(), Error> {
+    pub async fn app_set_preferences(&mut self, config: impl Borrow<QBittorrentConfig>) -> Result<(), Error> {
         let mut hashmap = HashMap::new();
 
         hashmap.insert("json", config.borrow());

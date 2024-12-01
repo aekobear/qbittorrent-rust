@@ -2,10 +2,20 @@ use std::fmt::{Display, Formatter};
 
 use super::error_type::ErrorType;
 
+/// ## Description
+/// represents an error given by the library.
+/// 
+/// ## Fields
+/// - err_type: error type.
+/// - message: error message.
+/// - code: eventual HTTP error code.
 #[derive(Debug)]
 pub struct Error {
+    ///error type
     pub err_type: ErrorType,
+    /// error message
     pub message: String,
+    /// eventual HTTP error code
     pub code: Option<u16>
 } impl Error {
     pub(crate) fn build(err_type: ErrorType, code: Option<u16>) -> Error {

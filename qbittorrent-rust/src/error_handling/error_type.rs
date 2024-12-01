@@ -1,3 +1,5 @@
+/// ## Description
+/// describes the type of error which occurred.
 #[derive(Debug)]
 pub enum ErrorType {
     TorrentsNotSet,

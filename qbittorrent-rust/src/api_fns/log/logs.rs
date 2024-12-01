@@ -3,7 +3,7 @@ use std::borrow::Borrow;
 use proc_macros::Builder;
 use serde_json::Value;
 
-use crate::{core::api::Api, error_handling::error_type::ErrorType, url, Error};
+use crate::{core::api::QbitApi, error_handling::error_type::ErrorType, url, Error};
 
 pub struct GetLogConfig {
     normal: bool,
@@ -69,23 +69,23 @@ pub struct GetLogConfigBuilder {
     }
 }
 
-impl Api {
-    pub async fn get_log(&mut self, config: impl Borrow<GetLogConfig>) -> Result<Value, crate::Error> {
-        Ok(serde_json::from_str(Self::get_log_raw(self, config).await?.as_str()).map_err(|e| Error::build(ErrorType::JsonSerdeError(Box::new(e)), None))?)
+impl QbitApi {
+    pub async fn log_get_log(&mut self, config: impl Borrow<GetLogConfig>) -> Result<Value, crate::Error> {
+        Ok(serde_json::from_str(Self::log_get_log_raw(self, config).await?.as_str()).map_err(|e| Error::build(ErrorType::JsonSerdeError(Box::new(e)), None))?)
     }
 
-    pub async fn get_log_raw(&mut self, config: impl Borrow<GetLogConfig>) -> Result<String, crate::Error> {
+    pub async fn log_get_log_raw(&mut self, config: impl Borrow<GetLogConfig>) -> Result<String, crate::Error> {
         let config: &GetLogConfig = config.borrow();
 
         let url = url!("/log/main", ("info", Some(config.info)), ("normal", Some(config.normal)), ("warning", Some(config.warning)), ("critical", Some(config.critical)), ("last_known_id", Some(config.last_known_id)));
         Self::make_request(self, url, "get_log".to_string()).await
     }
 
-    pub async fn get_peer_log(&mut self, last_known_id: Option<i64>) -> Result<Value, Error> {
-        Ok(serde_json::from_str(Self::get_peer_log_raw(self, last_known_id).await?.as_str()).map_err(|e| Error::build(ErrorType::JsonSerdeError(Box::new(e)), None))?)
+    pub async fn log_get_peer_log(&mut self, last_known_id: Option<i64>) -> Result<Value, Error> {
+        Ok(serde_json::from_str(Self::log_get_peer_log_raw(self, last_known_id).await?.as_str()).map_err(|e| Error::build(ErrorType::JsonSerdeError(Box::new(e)), None))?)
     }
 
-    pub async fn get_peer_log_raw(&mut self, last_known_id: Option<i64>) -> Result<String, Error> {
+    pub async fn log_get_peer_log_raw(&mut self, last_known_id: Option<i64>) -> Result<String, Error> {
         let x = match last_known_id {
             Some(val) => val,
             None => -1

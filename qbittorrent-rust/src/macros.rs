@@ -1,12 +1,14 @@
 #[macro_export]
 macro_rules! post_request {
-    ($func_name:ident, $path:expr) => {
+    ($(#[$meta:meta])* $func_name:ident, $path:expr) => {
+        $(#[$meta])*
         pub async fn $func_name(&mut self) -> Result <String, crate::Error> {
             Self::make_request(self, $path, format!("{}", stringify!($func_name))).await
         }
     };
 
-    ($func_name:ident, $path:expr, $(($name_arg:tt, $type:ty)),+) => {
+    ($(#[$meta:meta])* $func_name:ident, $path:expr, $(($name_arg:tt, $type:ty)),+) => {
+        $(#[$meta])*
         pub async fn $func_name(&mut self, $($name_arg: $type),+) -> Result <String, crate::Error> {
             let mut form_data = std::collections::HashMap::new();
 
@@ -34,14 +36,16 @@ macro_rules! post_request {
 
 #[macro_export]
 macro_rules! post_request_no_return {
-    ($func_name:ident, $path:expr) => {
+    ($(#[$meta:meta])* $func_name:ident, $path:expr) => {
+        $(#[$meta])* 
         pub async fn $func_name(&mut self) -> Result <(), crate::Error> {
             Self::make_request(self, $path, format!("{}", stringify!($func_name))).await?;
             Ok(())
         }
     };
 
-    ($func_name:ident, $path:expr, $(($name_arg:tt, $type:ty)),+) => {
+    ($(#[$meta:meta])*  $func_name:ident, $path:expr, $(($name_arg:tt, $type:ty)),+) => {
+        $(#[$meta])*
         pub async fn $func_name(&mut self, $($name_arg: $type),+) -> Result <(), crate::Error> {
             use crate::error_handling::error_type::ErrorType;
             let mut form_data = std::collections::HashMap::new();
@@ -143,7 +147,8 @@ macro_rules! fn_hash_value_pair {
 
 #[macro_export]
 macro_rules! torrents_fn_mult_hashes {
-    ($func_name:ident, $url:expr) => {
+    ($(#[$meta:meta])* $func_name:ident, $url:expr) => {
+        $(#[$meta])*
         pub async fn $func_name(&mut self, hashes: impl Borrow<TorrentHashesDesc>) -> Result<(), Error> {
             let hashes_str = hashes.borrow().get_string("|");
             
@@ -156,9 +161,25 @@ macro_rules! torrents_fn_mult_hashes {
     };
 }
 
+
+#[macro_export]
+macro_rules! torrents_fn_mult_hashes_res {
+    ($func_name:ident, $url:expr) => {
+        pub async fn $func_name(&mut self, hashes: impl Borrow<TorrentHashesDesc>) -> Result<String, Error> {
+            let hashes_str = hashes.borrow().get_string("|");
+            
+            let url = url!($url, ("hashes", Some(hashes_str)));
+    
+            let res = self.make_request(url, stringify!($func_name)).await?;
+            Ok(res)
+        }
+    };
+}
+
 #[macro_export]
 macro_rules! torrents_fn_mult_hashes_prios {
-    ($func_name:ident, $url:expr) => {
+    ($(#[$meta:meta])* $func_name:ident, $url:expr) => {
+        $(#[$meta])*
         pub async fn $func_name(&mut self, hashes: impl Borrow<TorrentHashesDesc>) -> Result<(), Error> {
             let hashes_str = hashes.borrow().get_string("|");
             
