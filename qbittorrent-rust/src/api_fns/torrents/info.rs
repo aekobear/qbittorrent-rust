@@ -258,10 +258,3 @@ impl QbitApi {
         Self::make_request(self, url, "get_torrent_list").await
     }
 }
-
-#[tokio::test]
-pub async fn test() {
-    let mut api = QbitApi::new("http://localhost:6011/", crate::core::creds::Credentials::new("admin", "123456")).await.unwrap();
-    let something = api.torrents_get_hashes().await.unwrap();
-    println!("{:?}", something)
-}

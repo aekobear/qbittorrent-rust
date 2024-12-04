@@ -27,12 +27,3 @@ impl QbitApi {
         serde_json::from_str(Self::sync_get_torrent_peers_data_raw(self, hash, rid).await?.as_str()).map_err(|e| Error::build(ErrorType::JsonSerdeError(Box::new(e)), None))
     }
 }
-
-#[tokio::test]
-pub async fn test() {
-    let mut api = QbitApi::new("http://localhost:6011/", crate::core::creds::Credentials::new("admin", "123456")).await.unwrap();
-
-    let x = api.sync_get_main_data_raw(0).await.unwrap();
-
-    println!("{}", x)
-}
