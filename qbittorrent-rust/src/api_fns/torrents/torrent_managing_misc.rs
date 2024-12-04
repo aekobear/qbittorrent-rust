@@ -1298,21 +1298,3 @@ impl<X: Borrow<TorrentHash>> GetHash for X {
         x.hash.clone()
     }
 }
-
-#[tokio::test]
-//#[should_panic]
-async fn test() {
-    let mut api = QbitApi::new(
-        "http://localhost:6011/",
-        crate::core::creds::Credentials::new("admin", "123456"),
-    )
-    .await
-    .unwrap();
-
-    // let hash = api.get_hashes().await.unwrap()[0].clone();
-    // println!("{:?}", hash);
-    // api.torrents_set_torrent_name(hash, "archlinux").await.unwrap();
-
-    let x = api.torrents_remove_categories(vec!["something"]).await;
-    println!("{:?}", x)
-}

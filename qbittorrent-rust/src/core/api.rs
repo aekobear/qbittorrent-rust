@@ -11,7 +11,7 @@ use crate::error_handling::errors::Error;
 
 ///## Description
 /// the main struct of the library.
-/// each API-related method is listed as its category, followed by its name: `$category$_$name_of_the_method$`. 
+/// each API-related method is listed as its category, followed by its name: `$category_$name_of_the_method`. 
 /// For more info about categories, look at the main library description.
 #[derive(Debug, Clone)]
 pub struct QbitApi {
@@ -34,7 +34,7 @@ impl QbitApi {
     /// 
     /// ## Example
     /// ```
-    /// let qbit_api = QbitApi::new("http://localhost:6011///////", Credentials::new("user_name", "password")).await.unwrap();
+    /// let qbit_api = QbitApi::new("http://localhost:6011/", Credentials::new("user_name", "password")).await.unwrap();
     /// ```
     pub async fn new(authority: impl AsRef<str>, credentials: Credentials) -> Result<Self, Error> {
         let s = authority.as_ref();

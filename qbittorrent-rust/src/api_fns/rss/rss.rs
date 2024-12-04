@@ -6,6 +6,8 @@ use serde_json::Value;
 
 use crate::{core::api::QbitApi, error_handling::error_type::ErrorType, hashmap, request_error_focus, Error};
 
+/// ## Info
+/// Describes a rss auto download rule.
 #[derive(Debug, Clone, Serialize)]
 pub struct RssAutoDownloadRule {
     enabled: bool,
@@ -22,11 +24,16 @@ pub struct RssAutoDownloadRule {
     assigned_category: String,
     save_path: String,
 } impl RssAutoDownloadRule {
+
+    /// ## Usage
+    /// Returns the builder struct for [`RssAutoDownloadRule`]: [`RssAutoDownloadRuleBuilder`].
     pub fn builder() -> RssAutoDownloadRuleBuilder {
         RssAutoDownloadRuleBuilder::new()
     }
 }
 
+/// ## Info
+/// Builder struct for [`RssAutoDownloadRule`].
 #[derive(Debug, Clone, Builder)]
 pub struct RssAutoDownloadRuleBuilder{
     pub enabled: Option<bool>,
@@ -43,16 +50,22 @@ pub struct RssAutoDownloadRuleBuilder{
     pub assigned_category: Option<String>,
     pub save_path: Option<String>,
 } impl RssAutoDownloadRuleBuilder {
+    /// ## Usage
+    /// Creates a new blank instance of [`RssAutoDownloadRuleBuilder`].
     pub fn new() -> Self {
         RssAutoDownloadRuleBuilder { enabled: None, must_contain: None, must_not_contain: None, use_regex: None, episode_filter: None, smart_filter: None, previously_matched_episodes: None, affected_feeds: None, ignore_days: None, last_match: None, add_paused: None, assigned_category: None, save_path: None }
     }
 
+    /// ## Usage
+    /// Finalizes the builder and returns a [`RssAutoDownloadRule`].
     pub fn build(self) -> RssAutoDownloadRule {
         RssAutoDownloadRule { enabled: self.enabled.unwrap_or(false), must_contain: self.must_contain.unwrap_or_default(), must_not_contain: self.must_not_contain.unwrap_or_default(), use_regex: self.use_regex.unwrap_or(false), episode_filter: self.episode_filter.unwrap_or_default(), smart_filter: self.smart_filter.unwrap_or(false), previously_matched_episodes: self.previously_matched_episodes.unwrap_or(vec![]), affected_feeds: self.affected_feeds.unwrap_or(vec![]), ignore_days: self.ignore_days.unwrap_or(0), last_match: self.last_match.unwrap_or_default(), add_paused: self.add_paused.unwrap_or(false), assigned_category: self.assigned_category.unwrap_or_default(), save_path: self.save_path.unwrap_or_default() }
     }
 }
 
 impl QbitApi {
+    /// ## Usage
+    /// Adds a new rss folder.
     #[experimental]
     pub async fn rss_add_folder(&mut self, path: impl Into<String>) -> Result<(), Error> {
         let path: String = path.into();
@@ -64,6 +77,52 @@ impl QbitApi {
         Ok(())
     }
 
+    /// ## Usage
+    /// Adds a new feed.
+    #[experimental]
+    pub async fn rss_add_feed(&mut self, url: impl Into<String>, path: Option<impl Into<String>>) -> Result<(), Error> {
+        match path {
+            Some(path) => {
+                let x: String = path.into();
+                let hashmap = hashmap!(("url", Into::<String>::into(url)), ("path", x));
+                request_error_focus!(
+                    self,
+                    rss_add_feed,
+                    "/search/addFeed",
+                    hashmap,
+                    (
+                        409,
+                        ErrorType::MiscError(
+                            "Failure to add feed"
+                                .to_string()
+                        )
+                    )
+                )?;
+                Ok(())
+            },
+
+            None => {
+                let hashmap = hashmap!(("url", Into::<String>::into(url)));
+                request_error_focus!(
+                    self,
+                    rss_add_feed,
+                    "/search/addFeed",
+                    hashmap,
+                    (
+                        409,
+                        ErrorType::MiscError(
+                            "Failure to add feed"
+                                .to_string()
+                        )
+                    )
+                )?;
+                Ok(())
+            }
+        }
+    }
+
+    /// ## Usage
+    /// Removes a feed or folder.
     #[experimental]
     pub async fn rss_remove_item(&mut self, path: impl Into<String>) -> Result<(), Error> {
         let path: String = path.into();
@@ -75,6 +134,8 @@ impl QbitApi {
         Ok(())
     }
 
+    /// ## Usage
+    /// Moves/renames folder or feed.
     #[experimental]
     pub async fn rss_move_item(&mut self, original_path: impl Into<String>, destination_path: impl Into<String>) -> Result<(), Error> {
         let path_orig: String = original_path.into();
@@ -87,6 +148,8 @@ impl QbitApi {
         Ok(())
     }
 
+    /// ## Usage
+    /// Gets all items as a [`String`].
     #[experimental]
     pub async fn rss_get_all_items_raw(&mut self, with_data: Option<bool>) -> Result<String, Error> {
         if let Some(x) = with_data {
@@ -98,11 +161,15 @@ impl QbitApi {
         }
     }
 
+    /// ## Usage
+    /// Gets all items as a json [`Value`]
     #[experimental]
     pub async fn rss_get_all_items(&mut self, with_data: Option<bool>) -> Result<Value, Error> {
         serde_json::from_str(self.rss_get_all_items_raw(with_data).await?.as_str()).map_err(|e| Error::build(ErrorType::JsonSerdeError(Box::new(e)), None))
     }
 
+    /// ## Usage
+    /// If article_id is provided only the article is marked as read otherwise the whole feed is going to be marked as read.
     #[experimental]
     pub async fn rss_mark_as_read(&mut self, item_path: impl Into<String>, article_id: Option<impl Into<String>>) -> Result<(), Error> {
         let path = item_path.into() as String;
@@ -119,6 +186,8 @@ impl QbitApi {
         }
     }
 
+    /// ## Usage 
+    /// Refreshes folder or feed.
     #[experimental]
     pub async fn rss_refresh_item(&mut self, item_path: impl Into<String>) -> Result<(), Error> {
         let path = item_path.into() as String;
@@ -127,6 +196,8 @@ impl QbitApi {
         Ok(())
     }
 
+    /// ## Usage
+    /// Sets a new auto-downloading rule based on a [`RssAutoDownloadRule`].
     #[experimental]
     pub async fn rss_set_auto_downloading_rule(&mut self, rule_name: impl Into<String>, rule: impl Borrow<RssAutoDownloadRule>) -> Result<(), Error> {
         let name = rule_name.into() as String;
@@ -137,6 +208,8 @@ impl QbitApi {
         Ok(())
     }
 
+    /// ## Usage
+    /// Renames an auto-downloading rule.
     #[experimental]
     pub async fn rss_rename_auto_downloading_rule(&mut self, original_name: impl Into<String>, new_name: impl Into<String>) -> Result<(), Error> {
         let name_orig = original_name.into() as String;
@@ -147,6 +220,8 @@ impl QbitApi {
         Ok(())
     }
 
+    /// ## Usage
+    /// Removes an auto-downloading rule.
     #[experimental]
     pub async fn rss_remove_auto_downloading_rule(&mut self, rule_name: impl Into<String>) -> Result<(), Error> {
         let name = rule_name.into() as String;
@@ -156,17 +231,23 @@ impl QbitApi {
         Ok(())
     }
 
+    /// ## Usage
+    /// Gets all auto-downloading rules as a [`String`].
     #[experimental]
     pub async fn rss_get_all_auto_downloading_rules_raw(&mut self) -> Result<String, Error> {
         let x = self.make_request("/rss/rules", "rss_get_all_auto_downloading_rules_raw").await?;
         Ok(x)
     }
 
+    /// ## Usage
+    /// Gets all auto-downloading rules as a json [`Value`].
     #[experimental]
     pub async fn rss_get_all_auto_downloading_rules(&mut self) -> Result<Value, Error> {
         serde_json::from_str(self.rss_get_all_auto_downloading_rules_raw().await?.as_str()).map_err(|e| Error::build(ErrorType::JsonSerdeError(Box::new(e)), None))
     }
 
+    /// ## Usage
+    /// Gets all articles matching a rule as a [`String`].
     #[experimental]
     pub async fn rss_get_all_articles_matching_a_rule_raw(&mut self, rule_name: impl Into<String>) -> Result<String, Error> {
         let name = rule_name.into() as String;
@@ -176,6 +257,8 @@ impl QbitApi {
         Ok(x)
     }
 
+    /// ## Usage
+    /// Gets all articles matching a rule as a json [`Value`].
     #[experimental]
     pub async fn rss_get_all_articles_matching_a_rule(&mut self, rule_name: impl Into<String>) -> Result<Value, Error> {
         serde_json::from_str(self.rss_get_all_articles_matching_a_rule_raw(rule_name).await?.as_str()).map_err(|e| Error::build(ErrorType::JsonSerdeError(Box::new(e)), None))

@@ -1,7 +1,8 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
-    parse_macro_input, Data, DataStruct, DeriveInput, Fields, GenericArgument, Path, PathArguments, Type, TypePath
+    parse::ParseBuffer, parse_macro_input, Data, DataStruct, DeriveInput, Fields, GenericArgument,
+    Path, PathArguments, Type, TypePath,
 };
 
 #[proc_macro_derive(Builder, attributes(builder))]
@@ -12,7 +13,21 @@ pub fn builder(input: TokenStream) -> TokenStream {
 
     let name = input.ident;
 
-    
+    let mut path = None;
+
+    for attr in &input.attrs {
+        if attr.path().is_ident("builder") {
+            attr.parse_nested_meta(|meta| {
+                if meta.path.is_ident("path") {
+                    // Expect the value to be a string literal (e.g., path = "value")
+                    let lit_str: syn::LitStr = meta.value()?.parse()?; // Parse the value as a LitStr
+                    path = Some(lit_str.value()); // Extract the string value
+                }
+                Ok(())
+            })
+            .unwrap(); // Handle parse errors gracefully or propagate them
+        }
+    }
 
     let fields = match input.data {
         Data::Struct(DataStruct {
@@ -23,13 +38,11 @@ pub fn builder(input: TokenStream) -> TokenStream {
         _ => panic!("this is only for structs!"),
     };
 
-    
-
     for field in fields.iter() {
         let name = field.ident.clone();
         let ty = field.ty.clone();
         //check for the cutsom thing
-        let mut custom_requested = false; 
+        let mut custom_requested = false;
         for attr in field.attrs.clone() {
             if attr.path().is_ident("builder") {
                 attr.parse_nested_meta(|meta| {
@@ -48,12 +61,9 @@ pub fn builder(input: TokenStream) -> TokenStream {
         }
 
         let something = match ty {
-            Type::Path(tyype) => {
-                tyype
-            }, 
-            _ => panic!("panic1")
+            Type::Path(tyype) => tyype,
+            _ => panic!("panic1"),
         };
-
 
         match option_inner_type(&something.path) {
             Some(Type::Path(TypePath { path, .. })) if path.is_ident("String") => {
@@ -62,25 +72,34 @@ pub fn builder(input: TokenStream) -> TokenStream {
                         self.#name = Some(value.into());
                         self
                     }
-        
+
                 });
-            },
+            }
 
             Some(inner) => {
-                setters.push(quote! {
-                    pub fn #name(mut self, value: #inner) -> Self {
-                        self.#name = Some(value);
-                        self
-                    }
-        
-                });
+                if path.is_none() {
+                    setters.push(quote! {
+                        pub fn #name(mut self, value: #inner) -> Self {
+                            self.#name = Some(value);
+                            self
+                        }
+
+                    });
+                } else {
+                    let path_syn = quote! { #path };
+                
+                    setters.push(quote! {
+                        pub fn #name(mut self, value: #inner) -> Self {
+                            self.#path_syn.#name = Some(value);
+                            self
+                        }
+                    });
+                }
+            }
+            _ => {
+               panic!("aaaaa")
             },
-            _ => panic!("panic2")
         };
-
-
-         
-        
     }
 
     let expanded = quote! {
@@ -146,6 +165,18 @@ pub fn requires_mult_hashes(_: TokenStream, item: TokenStream) -> TokenStream {
     let item = parse_macro_input!(item as syn::Item);
     let output = quote! {
         #[doc = "This method requires knowing the hashes of the torrents interested by using [`TorrentHashesDesc`]. You can either set it to `TorrentHashesDesc::All`, or set it to specific hashes with `TorrentHashesDesc::Custom`."]
+        #[doc = ""]
+        #[doc = ""]
+        #item
+    };
+    output.into()
+}
+
+#[proc_macro_attribute]
+pub fn requires_id(_: TokenStream, item: TokenStream) -> TokenStream {
+    let item = parse_macro_input!(item as syn::Item);
+    let output = quote! {
+        #[doc = "This method requires knowing the id of the search interested. You can get it from the [`QbitApi::search_start()`] method."]
         #[doc = ""]
         #[doc = ""]
         #item

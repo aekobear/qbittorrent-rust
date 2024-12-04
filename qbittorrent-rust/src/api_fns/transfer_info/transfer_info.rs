@@ -127,16 +127,3 @@ impl QbitApi {
         .map_err(|e| Error::build(ErrorType::JsonSerdeError(Box::new(e)), None))
     }
 }
-
-#[tokio::test]
-async fn test() {
-    let mut api = QbitApi::new(
-        "http://localhost:6011///",
-        crate::core::creds::Credentials::new("admin", "123456"),
-    )
-    .await
-    .unwrap();
-    let _thing = api.transfer_set_global_upload_limit(0).await.unwrap();
-
-    //println!("{}", thing)
-}

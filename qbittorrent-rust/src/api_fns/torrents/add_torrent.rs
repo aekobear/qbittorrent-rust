@@ -72,7 +72,7 @@ impl TorrentAddDescriptor {
     /// creates a new instance of [`TorrentAddDescriptor`].
     /// 
     /// ## Warning
-    /// the `torrents` argument mustn't be an empty vector. The if it is, the function will return an [`Error`] with error type [`ErrorType::TorrentsNotSet`]
+    /// the `torrents` argument mustn't be an empty vector. If it is, the function will return an [`Error`] with error type [`ErrorType::TorrentsNotSet`]
     pub fn new(torrents: Vec<Torrent>) -> Result<Self, Error> {
         Self::builder(torrents).build()
     }
@@ -445,9 +445,4 @@ async fn torrents_part(
         form_torrents = form_torrents.part("torrents", file_part);
     }
     Ok(form_torrents)
-}
-
-#[test]
-fn aaaa() {
-    //TorrentAddDescriptor::builder().auto_tmm(true);
 }

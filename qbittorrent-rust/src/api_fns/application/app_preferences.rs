@@ -1,20 +1,84 @@
+use serde::Serialize;
 use serde_json::Value;
 
 use crate::error_handling::error_type::ErrorType;
+use crate::extended_matches;
 use crate::{core::api::QbitApi, Error};
 
 use std::borrow::Borrow;
 use std::collections::HashMap;
 
+/// ## Info
+/// represents the scan_dirs field in [`QBittorrentConfig`].
+/// ## Example
+/// ```
+/// let multiple_scan_dirs = MultipleScanDirs::new(vec![("folder_path", ScanDirValue::DownloadToCustomPath("./custom/path/here".to_string())), ("folder_path_2", ScanDirValue::DownloadToDefaultPath)]);
+/// ```
+#[derive(Debug, Clone)]
+pub struct ScanDirs {
+    vec: Vec<ScanDir>,
+} impl ScanDirs {
+    pub fn new<S: AsRef<str>>(scan_dirs: impl Borrow<Vec<(S, ScanDirsValue)>>) -> Self {
+        Self {
+            vec: Borrow::<Vec<(S, ScanDirsValue)>>::borrow(&scan_dirs).into_iter().map(|el| {
+                ScanDir::new(el.0.as_ref(), el.1.clone())
+            }).collect::<Vec<ScanDir>>()
+        }
+    }
+}
 
+#[derive(Debug, Clone)]
+pub(crate) struct ScanDir {
+    key: String,
+    value: ScanDirsValue
+} impl ScanDir {
+    pub fn new(path: impl AsRef<str>, value: ScanDirsValue) -> Self {
+        Self {
+            key: path.as_ref().into(),
+            value
+        }
+    }
+}
+
+impl Serialize for ScanDirs {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer 
+    {
+        let mut hashmap = HashMap::new();
+
+        for scan_dir in self.vec.iter() {
+            hashmap.insert(scan_dir.key.clone(), scan_dir.value.clone());
+        }
+
+        hashmap.serialize(serializer)
+    }
+}
+
+
+/// ## Info
+/// used with [`ScanDirs`]
+#[derive(Debug, Clone)]
+pub enum ScanDirsValue {
+    DownloadToMonitoredFolder,
+    DownloadToDefaultPath,
+    DownloadToCustomPath(String),
+} impl Serialize for ScanDirsValue {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer 
+    {
+        match self {
+            ScanDirsValue::DownloadToMonitoredFolder => serializer.serialize_u8(0),
+            ScanDirsValue::DownloadToDefaultPath => serializer.serialize_u8(1),
+            ScanDirsValue::DownloadToCustomPath(string) => string.serialize(serializer),
+        }
+    }
+}
+
+/// ## Info
 /// Represents the qBittorrent application configuration.
-/// docs: <https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-4.1)#get-application-preferences>
-///
-/// # WARNING
-/// - this is used at the user's disclosure. be careful when using this. read the docs to not make this panic.
-///
-/// # PANICS
-/// - if any of the fields aren't what qbittorrent would expect. example: an int that can only be 1 or 2 has value 3.
+/// explanation of each field: <https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-4.1)#get-application-preferences>
 #[derive(Debug, Default, serde::Serialize)]
 pub struct QBittorrentConfig {
     // General settings
@@ -59,7 +123,7 @@ pub struct QBittorrentConfig {
 
     // Scan directories
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub scan_dirs: Option<HashMap<String, u8>>,
+    pub scan_dirs: Option<Vec<ScanDirs>>,
 
     // Export directories
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -477,10 +541,6 @@ impl QBittorrentConfig {
     pub fn builder() -> QBittorrentConfigBuilder {
         QBittorrentConfigBuilder::default()
     }
-
-    // pub(crate) fn get_value(&self) -> Value {
-
-    // }
 }
 
 #[derive(Default)]
@@ -557,17 +617,8 @@ impl QBittorrentConfigBuilder {
     }
 
     // Scan directories
-    pub fn scan_dirs<S: Into<String>>(mut self, value: HashMap<S, u8>) -> Self {
-        let mut hash = HashMap::new();
-
-        for (x, y) in value.into_iter() {
-            if !(y == 0 || y == 1) {
-                panic!("the values aren't valid. (scan_dirs)");
-            }
-            hash.insert(x.into(), y);
-        }
-
-        self.config.scan_dirs = Some(hash);
+    pub fn scan_dirs<S: Into<String>>(mut self, value: impl Borrow<Vec<ScanDirs>>) -> Self {
+        self.config.scan_dirs = Some(Borrow::<Vec<ScanDirs>>::borrow(&value).clone());
         self
     }
 
@@ -688,10 +739,6 @@ impl QBittorrentConfigBuilder {
     }
 
     pub fn max_ratio_act(mut self, value: u32) -> Self {
-        if !(value == 1 || value == 0) {
-            panic!("value not in the expected range. (max_ratio_act)")
-        }
-
         self.config.max_ratio_act = Some(value);
         self
     }
@@ -753,10 +800,6 @@ impl QBittorrentConfigBuilder {
     }
 
     pub fn bittorrent_protocol(mut self, value: u32) -> Self {
-        if !((0..3).contains(&value)) {
-            panic!("value not in the expected range. (bittorrent protocol)")
-        }
-
         self.config.bittorrent_protocol = Some(value);
         self
     }
@@ -813,10 +856,7 @@ impl QBittorrentConfigBuilder {
     }
 
     pub fn scheduler_days(mut self, value: u8) -> Self {
-        if !((0_u8..10).contains(&value)) {
-            panic!("value not in the range expected. (scheduer_days)")
-        }
-
+        
         self.config.scheduler_days = Some(value);
         self
     }
@@ -838,21 +878,12 @@ impl QBittorrentConfigBuilder {
     }
 
     pub fn encryption(mut self, value: u32) -> Self {
-        if !((0..3).contains(&value)) {
-            panic!("value not in the expected range. (encryption)")
-        }
-
         self.config.encryption = Some(value);
         self
     }
 
     // Proxy settings
     pub fn proxy_type(mut self, value: i32) -> Self {
-        match value {
-            -1 | 1 | 2 | 3 | 4 | 5 => {}
-            _ => panic!("value not in the expected range. (proxy type)"),
-        }
-
         self.config.proxy_type = Some(value);
         self
     }
@@ -1031,10 +1062,6 @@ impl QBittorrentConfigBuilder {
     }
 
     pub fn dyndns_service(mut self, value: u32) -> Self {
-        if !(value == 0 || value == 1) {
-            panic!("value not in the expected range. (dyndns_service)")
-        }
-
         self.config.dyndns_service = Some(value);
         self
     }
@@ -1251,19 +1278,11 @@ impl QBittorrentConfigBuilder {
     }
 
     pub fn upload_choking_algorithm(mut self, value: u32) -> Self {
-        if !((0..3).contains(&value)) {
-            panic!("value not in the expected range. (upload_choking_algorithm)")
-        }
-
         self.config.upload_choking_algorithm = Some(value);
         self
     }
 
     pub fn upload_slots_behavior(mut self, value: u32) -> Self {
-        if !(value == 0 || value == 1) {
-            panic!("value not in the expected range. (upload_slots_behavior)")
-        }
-
         self.config.upload_slots_behavior = Some(value);
         self
     }
@@ -1274,33 +1293,74 @@ impl QBittorrentConfigBuilder {
     }
 
     pub fn utp_tcp_mixed_mode(mut self, value: u32) -> Self {
-        if !(value == 0 || value == 1) {
-            panic!("value not in the expected range. (utp_tcp_mixed_mode)")
-        }
-
         self.config.utp_tcp_mixed_mode = Some(value);
         self
     }
 
-    pub fn build(self) -> QBittorrentConfig {
-        self.config
+    /// ## Usage
+    /// Returns the finalized [`QbittorrentConfig`].
+    /// 
+    /// ## Errors 
+    /// will return an [`Error`] with error type [`ErrorType::ParameterNotExpected`] if any fields aren't in the scope of what the qbittorrent WebUI API would expect;
+    /// the acceptable ranges for (all) the settings that have an acceptable range are listed here, with inclusive ranges; (all these values could also be not set):
+    /// - scheduler_days: from 0 to 9,
+    /// - encryption: from 0 to 2,
+    /// - proxy_type: -1, or from 1 to 5,
+    /// - dyndns_service: either 0 or 1,
+    /// - max_ratio_act: either 0 or 1,
+    /// - bittorrent_protocol: from 0 to 2,
+    /// - upload_choking_algorithm: from 0 to 2,
+    /// - upload_slots_behavior: either 0 or 1,
+    /// - utp_tcp_mixed_mode: either 0 or 1.
+    /// 
+    /// for an explanation of what each number means in each case, refer to the [qbittorent docs](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-4.1)#get-application-preferences)
+    pub fn build(self) -> Result<QBittorrentConfig, Error> {
+        if !(extended_matches!(self.config.utp_tcp_mixed_mode, Some(0), Some(1), None))
+            || !(extended_matches!(self.config.upload_slots_behavior, Some(0), Some(1), None))
+            || !(extended_matches!(self.config.proxy_type, Some(-1 | 1 | 2 | 3 | 4 | 5), None))
+            || !(extended_matches!(self.config.encryption, Some(0 | 1 | 2), None))
+            || !(extended_matches!(self.config.upload_choking_algorithm, Some(0 | 1 | 2), None))
+            || !(extended_matches!(self.config.dyndns_service, Some(0 | 1), None))
+            || !(extended_matches!(self.config.bittorrent_protocol, Some(0 | 1 | 2), None))
+            || !(extended_matches!(self.config.max_ratio_act, Some(0 | 1), None))
+            || !(extended_matches!(self.config.scheduler_days, Some(0|1|2|3|4|5|6|7|8|9), None))
+        {
+            return Err(Error::build(ErrorType::ParameterNotExpected, None));
+        }
+
+        Ok(self.config)
     }
 }
 
 impl QbitApi {
+    /// ## Usage
+    /// Gets the app preferences as a json [`Value`].
+    /// For a list of all the information in the app preferences, refer to the [qbittorrent docs](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-4.1)#get-application-preferences)
     pub async fn app_get_preferences(&mut self) -> Result<Value, Error> {
         serde_json::from_str(Self::get_preferences_raw(self).await?.as_str())
             .map_err(|e| Error::build(ErrorType::JsonSerdeError(Box::new(e)), None))
     }
 
-    crate::post_request!(get_preferences_raw, "/app/preferences");
+    crate::post_request!(
+        /// ## Usage
+        /// Gets the app preferences as a [`String`].
+        /// For a list of all the information in the app preferences, refer to the [qbittorrent docs](https://github.com/qbittorrent/qBittorrent/wiki/WebUI-API-(qBittorrent-4.1)#get-application-preferences)
+        get_preferences_raw,
+        "/app/preferences"
+    );
 
-    pub async fn app_set_preferences(&mut self, config: impl Borrow<QBittorrentConfig>) -> Result<(), Error> {
+    /// ## Usage
+    /// Sets the app preferences according to the [`QBittorrentConfig`].
+    pub async fn app_set_preferences(
+        &mut self,
+        config: impl Borrow<QBittorrentConfig>,
+    ) -> Result<(), Error> {
         let mut hashmap = HashMap::new();
 
         hashmap.insert("json", config.borrow());
 
-        self.make_request_with_form("/app/setPreferences", "set_preferences", hashmap).await?;
+        self.make_request_with_form("/app/setPreferences", "set_preferences", hashmap)
+            .await?;
         Ok(())
     }
 }

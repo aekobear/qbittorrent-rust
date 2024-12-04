@@ -1,5 +1,6 @@
 use std::{borrow::Borrow, collections::HashMap};
 
+use proc_macros::requires_id;
 use serde::Serialize;
 use serde_json::Value;
 
@@ -8,25 +9,32 @@ use crate::{
     request_error_focus, Error,
 };
 
+/// ## Info
+/// Represents a search plugin.
+/// to get a vector of the available search plugins, use [`QbitApi::search_get_search_plugins_descriptor`]
+/// 
+/// ## Fields
+/// name: the name of the search plugin.
+/// categories: a vector of tuples of 2 strings, where the first string represents the id of the category, and the 2nd one represents the name of the category.
 #[derive(Debug, Clone)]
 pub struct SearchPlugin {
     pub name: String,
-    //                 v id v | v name v
+    //..................v id v | v name v
     pub categories: Vec<(String, String)>,
 }
 impl SearchPlugin {
-    /// creates a new [`Torrent`].
-    /// the `Result` returned by this function can be `unwrap`ped without worry as long as the file path is readable.
-    ///
-    /// # WARNING
-    /// - if the [`TorrentType`] is `Url`, you will need to use an url. if it is a `RawTorrent` you will need to use a file path.
-    /// - attention!!! the contents of the file in case of `TorrentType::RawTorrent` will NOT be read by this function, but by the [`Api::add_torrent`] function! make sure the path is accessible.
+    /// ## Usage
+    /// creates a new instance of [`SearchPlugin`].
+    /// 
+    /// ## Arguments
+    /// search_plugin_name: the name of the search plugin.
+    /// categories: a vector of tuples of 2 strings, where the first string represents the id of the category, and the 2nd one represents the name of the category. 
     pub fn new<S: Into<String> + Clone, X: Into<String> + Clone>(
-        search_plugin: S,
+        search_plugin_name: S,
         categories: impl Borrow<Vec<(X, X)>>,
     ) -> Self {
         Self {
-            name: search_plugin.into(),
+            name: search_plugin_name.into(),
             categories: Borrow::<Vec<(X, X)>>::borrow(&categories)
                 .into_iter()
                 .map(|(g, h)| {
@@ -39,6 +47,11 @@ impl SearchPlugin {
         }
     }
 
+    /// ## Usage
+    /// Creates a new vector of [`SearchPlugin`]s
+    /// 
+    /// ## Arguments 
+    /// The same as [`SearchPlugin::new()`], but with vectors of each argument.
     pub fn from_vec<S: Into<String> + Clone, X: Into<String> + Clone>(
         search_plugins_vec: impl Borrow<Vec<S>>,
         categories: impl Borrow<Vec<Vec<(X, X)>>>,
@@ -59,15 +72,21 @@ impl SearchPlugin {
         self.categories.clone()
     }
 
-    pub fn get_ids(&self) -> Vec<String> {
+    /// ## Usage
+    /// gets the ids of the categories for this plugin
+    pub fn get_categories_ids(&self) -> Vec<String> {
         self.get_categories().iter().map(|x| x.0.clone()).collect()
     }
 
-    pub fn get_names(&self) -> Vec<String> {
+    /// ## Usage
+    /// gets the names of the categories for this plugin
+    pub fn get_categories_names(&self) -> Vec<String> {
         self.get_categories().iter().map(|x| x.1.clone()).collect()
     }
 }
 
+/// ## Info
+/// Describes whether an operation should be carried out on all the [`SearchPlugin`]s, only the enabled ones, or specific (custom) ones.
 #[derive(Debug, Clone)]
 pub enum SearchPluginsDescriptor {
     All,
@@ -75,7 +94,7 @@ pub enum SearchPluginsDescriptor {
     Custom(Vec<SearchPlugin>),
 }
 impl SearchPluginsDescriptor {
-    pub fn get_inner(&self) -> Vec<SearchPlugin> {
+    pub(crate) fn get_inner(&self) -> Vec<SearchPlugin> {
         match self {
             SearchPluginsDescriptor::All => {
                 panic!("tried to get the inner value of SearchPulginsDescriptor::All")
@@ -88,32 +107,49 @@ impl SearchPluginsDescriptor {
     }
 }
 
+/// ## Info
+/// Describes whether an operation should be carried out on all the search plugins, only the enabled ones, or specific (custom) ones.
+/// Similar to [`SearchPluginsDescriptor`], but this struct represents the need to only know the name of search plugin (the `Custom` variant contains a vector of strings (the name of the plugin) instead of a vector of [`SearchPlugin`]s) 
+/// 
+/// ## Variants
+/// - The `Custom` variant contains a vector of names of plugins; to get the names of available plugins, use [`QbitApi::`].
 pub enum SearchPluginsSpec {
     All,
     Enabled,
     Custom(Vec<String>),
 }
 
+/// ## Info
+/// Describes whether an operation should be carried out on all the categories available or specific (custom) ones.
+/// 
+/// ## Variants
+/// - The `Custom` variant contains a vector of names of categories
 pub enum Categories {
     All,
     Custom(Vec<String>),
 }
 
 impl QbitApi {
+    /// ## Usage
+    /// Gets all available search plugins as a [`String`].
     pub async fn search_get_search_plugins_raw(&mut self) -> Result<String, crate::Error> {
         self.make_request("/search/plugins", "search_get_search_plugins_raw")
             .await
     }
 
-    pub async fn search_get_search_plugins(&mut self) -> Result<Value, crate::Error> {
+    /// ## Usage
+    /// Gets all available search plugins as a json [`Value`].
+    pub async fn search_get_search_plugins_json(&mut self) -> Result<Value, crate::Error> {
         serde_json::from_str(self.search_get_search_plugins_raw().await?.as_str())
             .map_err(|e| Error::build(ErrorType::JsonSerdeError(Box::new(e)), None))
     }
 
-    pub async fn search_get_search_plugins_descriptor(
+    /// ## Usage
+    /// Gets the available search plugins as a [`Vec`] of [`SearchPlugin`]s.
+    pub async fn search_get_search_plugins(
         &mut self,
     ) -> Result<Vec<SearchPlugin>, Error> {
-        let value = self.search_get_search_plugins().await?;
+        let value = self.search_get_search_plugins_json().await?;
         let names = value
             .as_array()
             .iter()
@@ -134,12 +170,12 @@ impl QbitApi {
         let categories = value
             .as_array()
             .unwrap() // Get the outer array
-            .iter() // Iterate over each object in the array
+            .iter() 
             .map(|site| {
                 site.get("supportedCategories")
                     .and_then(|categories| categories.as_array()) // Get the `supportedCategories` array
-                    .unwrap_or(&vec![]) // Handle potential nulls gracefully
-                    .iter() // Iterate over each category
+                    .unwrap_or(&vec![]) 
+                    .iter() 
                     .filter_map(|category| {
                         let name = category.get("name")?.as_str()?.to_string();
                         let id = category.get("id")?.as_str()?.to_string();
@@ -152,6 +188,17 @@ impl QbitApi {
         Ok(SearchPlugin::from_vec(names, categories))
     }
 
+    /// ## Usage
+    /// gets the names of the plugins in a [`Vec`].
+    pub async fn search_get_search_plugins_names(&mut self) -> Result<Vec<String>, Error> {
+        Ok(self.search_get_search_plugins().await?.into_iter().map(|el|el.get_name()).collect::<Vec<String>>())
+    }
+
+    /// ## Usage
+    /// Starts the search.
+    /// 
+    /// ## Returns
+    /// If everything goes well, it returns the search id.
     pub async fn search_start(
         &mut self,
         pattern: impl Into<String>,
@@ -193,6 +240,10 @@ impl QbitApi {
         Ok(val.get("id").unwrap().as_u64().unwrap())
     }
 
+
+    /// ## Usage
+    /// stops a search.
+    #[requires_id]
     pub async fn search_stop(&mut self, id: u64) -> Result<(), Error> {
         let hashmap = hashmap!(("id", id));
         request_error_focus!(
@@ -207,7 +258,10 @@ impl QbitApi {
         )?;
         Ok(())
     }
-
+    
+    /// ## Usage
+    /// Gets the status of a search job as a [`String`].
+    #[requires_id]
     pub async fn search_status_raw(&mut self, id: Option<u64>) -> Result<String, Error> {
         match id {
             Some(n) => {
@@ -243,11 +297,21 @@ impl QbitApi {
         }
     }
 
+    /// ## Usage
+    /// Gets the status of a search job as a json [`Value`].
+    #[requires_id]
     pub async fn search_status(&mut self, id: Option<u64>) -> Result<Value, Error> {
         serde_json::from_str(self.search_status_raw(id).await?.as_str())
             .map_err(|e| Error::build(ErrorType::JsonSerdeError(Box::new(e)), None))
     }
 
+    /// ## Usage
+    /// Gets the results of a search job as a [`String`].
+    /// 
+    /// ## Arguments
+    /// limit: max number of results to return. 0 or negative means no limit;
+    /// offset: result to start at. A negative number means count backwards (e.g. -2 returns the 2 most recent results)
+    #[requires_id]
     pub async fn search_results_raw(
         &mut self,
         id: u64,
@@ -269,6 +333,14 @@ impl QbitApi {
         Ok(res)
     }
 
+
+    /// ## Usage
+    /// Gets the results of a search job as a json [`Value`].
+    /// 
+    /// ## Arguments
+    /// limit: max number of results to return. 0 or negative means no limit;
+    /// offset: result to start at. A negative number means count backwards (e.g. -2 returns the 2 most recent results)
+    #[requires_id]
     pub async fn search_results(
         &mut self,
         id: u64,
@@ -279,6 +351,9 @@ impl QbitApi {
             .map_err(|e| Error::build(ErrorType::JsonSerdeError(Box::new(e)), None))
     }
 
+    /// ## Usage
+    /// deletes a search
+    #[requires_id]
     pub async fn search_delete(&mut self, id: u64) -> Result<(), Error> {
         let hashmap = hashmap!(("id", id));
         request_error_focus!(
@@ -294,6 +369,11 @@ impl QbitApi {
         Ok(())
     }
 
+    /// ## Usage
+    /// Installs a plugin.
+    /// 
+    /// ## Arguments
+    /// sources: the urls to the plugins
     pub async fn search_install_plugins<S: Into<String> + Clone>(
         &mut self,
         sources: impl Borrow<Vec<S>>,
@@ -314,6 +394,11 @@ impl QbitApi {
         Ok(())
     }
 
+    /// ## Usage
+    /// Uninstalls a plugin.
+    /// 
+    /// ## Arguments
+    /// sources: the urls to the plugins
     pub async fn search_uninstall_plugins<S: Into<String> + Clone>(
         &mut self,
         names: impl Borrow<Vec<S>>,
@@ -338,6 +423,11 @@ impl QbitApi {
         Ok(())
     }
 
+    /// ## Usage
+    /// enables search plugins based on the specified urls.
+    /// 
+    /// ## Arguments
+    /// - enable: whether to enable (true) or disable (false) the plugins.
     pub async fn search_enable_plugins<S: Into<String> + Clone>(
         &mut self,
         names: impl Borrow<Vec<S>>,
@@ -391,24 +481,10 @@ impl QbitApi {
         }
     }
 
+    /// ## Usage
+    /// updates the search plugins
     pub async fn search_update_plugins(&mut self) -> Result<(), Error> {
         self.make_request("search/updatePlugins", "search_update_plugins").await?;
         Ok(())
     }
-}
-
-#[tokio::test]
-async fn get_test() {
-    let mut api = QbitApi::new(
-        "http://localhost:6011/",
-        crate::core::creds::Credentials {
-            username: "admin".to_string(),
-            password: "123456".to_string(),
-        },
-    )
-    .await
-    .unwrap();
-    let desc = api.search_get_search_plugins_descriptor().await.unwrap();
-
-    println!("{:?}", desc)
 }

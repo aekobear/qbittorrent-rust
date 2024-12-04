@@ -253,3 +253,17 @@ macro_rules! hashmap {
         hashmapp
     }};
 }
+
+#[macro_export]
+macro_rules! extended_matches {
+    ($matchee:expr, $($patterns:pat),+) => {
+        {
+            match $matchee {
+                $(
+                    $patterns => true,
+                )+
+                _ => false
+            }
+        }
+    };
+}
