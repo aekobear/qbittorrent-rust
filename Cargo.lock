@@ -776,7 +776,7 @@ dependencies = [
 
 [[package]]
 name = "qbittorrent_rust"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "proc_macros_qbittorrent_rust 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "reqwest",
