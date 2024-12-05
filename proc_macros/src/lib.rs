@@ -62,13 +62,13 @@ pub fn builder(input: TokenStream) -> TokenStream {
 
         let something = match ty {
             Type::Path(tyype) => tyype,
-            _ => panic!("panic1"),//#[doc = concat!("Sets the `", stringify!(#name), "` field.")]
+            _ => panic!("panic1"),
         };
 
         match option_inner_type(&something.path) {
             Some(Type::Path(TypePath { path, .. })) if path.is_ident("String") => {
                 setters.push(quote! {
-                    /// Sets the `#name` field.
+                    #[doc = concat!("Sets the `", stringify!(#name), "` field.")]
                     pub fn #name(mut self, value: impl Into<String>) -> Self {
                         self.#name = Some(value.into());
                         self
@@ -80,7 +80,7 @@ pub fn builder(input: TokenStream) -> TokenStream {
             Some(inner) => {
                 if path.is_none() {
                     setters.push(quote! {
-                        /// Sets the `#name` field.
+                        #[doc = concat!("Sets the `", stringify!(#name), "` field.")]
                         pub fn #name(mut self, value: #inner) -> Self {
                             self.#name = Some(value);
                             self
