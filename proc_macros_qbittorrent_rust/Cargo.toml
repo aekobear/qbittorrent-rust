@@ -1,0 +1,14 @@
+[package]
+name = "proc_macros"
+version = "0.1.5"
+edition = "2021"
+description = "small helper crate for qbittorrent-rust"
+license = "MIT"
+
+[dependencies]
+syn = { version = "2.0", features = ["full"] }
+quote = "1.0"
+proc-macro2 = "1.0"
+
+[lib]
+proc-macro = true
