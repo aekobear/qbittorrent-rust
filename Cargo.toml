@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    #"qbittorrent_rust",
+    "qbittorrent_rust",
     "proc_macros_qbittorrent_rust",
 ]
 
