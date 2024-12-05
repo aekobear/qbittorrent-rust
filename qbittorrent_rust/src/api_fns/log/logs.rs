@@ -1,6 +1,6 @@
 use std::borrow::Borrow;
 
-use proc_macros::Builder;
+use proc_macros_qbittorrent_rust::Builder;
 use serde_json::Value;
 
 use crate::{core::api::QbitApi, error_handling::error_type::ErrorType, url, Error};

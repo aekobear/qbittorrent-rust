@@ -1,6 +1,6 @@
 use std::{borrow::Borrow, collections::HashMap};
 
-use proc_macros::requires_id;
+use proc_macros_qbittorrent_rust::requires_id;
 use serde::Serialize;
 use serde_json::Value;
 

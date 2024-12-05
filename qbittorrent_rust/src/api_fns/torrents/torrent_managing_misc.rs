@@ -1,6 +1,6 @@
 use std::{borrow::Borrow, collections::HashMap};
 
-use proc_macros::{requires_hash, requires_mult_hashes};
+use proc_macros_qbittorrent_rust::{requires_hash, requires_mult_hashes};
 use serde_json::Value;
 
 use crate::{

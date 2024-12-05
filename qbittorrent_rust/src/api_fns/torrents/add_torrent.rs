@@ -1,7 +1,7 @@
 use core::panic;
 use std::borrow::Borrow;
 
-use proc_macros::Builder;
+use proc_macros_qbittorrent_rust::Builder;
 use reqwest::header;
 use tokio::{fs::File, io::AsyncReadExt};
 
