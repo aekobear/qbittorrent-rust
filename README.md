@@ -1,10 +1,10 @@
-# <img src=".assets/qbittorrent.svg" alt="qbittorrent emoji" width="35" height="35" style="vertical-align: middle; margin-top: -5px;"> Qbittorrent-rust <img src=".assets/rust_lang.png" height="35" width="35" style="vertical-align: middle; margin-top: -5px;">
+# <img src=".assets/qbittorrent.svg" alt="qbittorrent emoji" width="35" height="35" style="vertical-align: middle; margin-top: -5px;"> Qbittorrent-rust <img src=".assets/rust_lang-white.png" height="35" width="35" style="vertical-align: middle; margin-top: -5px;">
 An asynchronous rust library to interface with the qbittorrent WebUI API.
 
 ## Goals 🏁
 This library's goal is the one to reflect the qbittorrent WebUI API in its entirety, and simultaneously being simple, fast, and concise.
 
-## <img src=".assets/qbittorrent-rust.png" width="35" height="35" style="vertical-align: middle; margin-top: -5px;"> Qbittorrent-rust in action <img src=".assets/qbittorrent-rust.png" width="35" height="35" style="vertical-align: middle; margin-top: -5px;">
+## <img src=".assets/qbittorrent-rust-white.png" width="35" height="35" style="vertical-align: middle; margin-top: -5px;"> Qbittorrent-rust in action <img src=".assets/qbittorrent-rust-white.png" width="35" height="35" style="vertical-align: middle; margin-top: -5px;">
 
 ```rust
 use qbittorrent_rust::*;
