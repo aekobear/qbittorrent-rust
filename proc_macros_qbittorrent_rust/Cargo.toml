@@ -1,8 +1,8 @@
 [package]
-name = "proc_macros"
+name = "proc_macros_qbittorrent_rust"
 version = "0.1.5"
 edition = "2021"
-description = "small helper crate for qbittorrent-rust"
+description = "small helper crate for qbittorrent_rust"
 license = "MIT"
 
 [dependencies]
