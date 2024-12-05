@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
-    parse::ParseBuffer, parse_macro_input, Data, DataStruct, DeriveInput, Fields, GenericArgument,
+    parse_macro_input, Data, DataStruct, DeriveInput, Fields, GenericArgument,
     Path, PathArguments, Type, TypePath,
 };
 
@@ -62,12 +62,13 @@ pub fn builder(input: TokenStream) -> TokenStream {
 
         let something = match ty {
             Type::Path(tyype) => tyype,
-            _ => panic!("panic1"),
+            _ => panic!("panic1"),//#[doc = concat!("Sets the `", stringify!(#name), "` field.")]
         };
 
         match option_inner_type(&something.path) {
             Some(Type::Path(TypePath { path, .. })) if path.is_ident("String") => {
                 setters.push(quote! {
+                    /// Sets the `#name` field.
                     pub fn #name(mut self, value: impl Into<String>) -> Self {
                         self.#name = Some(value.into());
                         self
@@ -79,6 +80,7 @@ pub fn builder(input: TokenStream) -> TokenStream {
             Some(inner) => {
                 if path.is_none() {
                     setters.push(quote! {
+                        /// Sets the `#name` field.
                         pub fn #name(mut self, value: #inner) -> Self {
                             self.#name = Some(value);
                             self
@@ -89,6 +91,7 @@ pub fn builder(input: TokenStream) -> TokenStream {
                     let path_syn = quote! { #path };
                 
                     setters.push(quote! {
+                        #[doc = concat!("Sets the `", stringify!(#name), "` field.")]
                         pub fn #name(mut self, value: #inner) -> Self {
                             self.#path_syn.#name = Some(value);
                             self

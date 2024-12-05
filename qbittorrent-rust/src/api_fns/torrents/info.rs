@@ -170,16 +170,28 @@ impl TorrentListGetConfig {
 
 /// ## Info
 /// builder struct for [`TorrentListGetConfig`].
+/// 
+/// ## Fields
+/// | Field        | Type    | Description                                                                                          |
+/// |--------------|---------|------------------------------------------------------------------------------------------------------|
+/// | `filter`     | `State`  | Filter torrent list by state.|
+/// | `category`   | `Category`  | Get torrents with the given category |
+/// | `tag`        | `String`  | Get torrents with the given tag (empty string means "without tag"; field "tag" unset means "any tag").  |
+/// | `sort`       | `String`  | Sort torrents by given key.|
+/// | `reverse`    | `Bool`    | Enable reverse sorting. Defaults to false.                                                           |
+/// | `limit`      | `Integer` | Limit the number of torrents returned.                                                              |
+/// | `offset`     | `Integer` | Set offset (if less than 0, offset from end).                                                        |
+/// | `hashes`     | `Vec<String>`  | Filter by hashes. |
 #[derive(Debug, Builder)]
 pub struct TorrentListGetConfigBuilder {
-    pub filter: Option<State>,
-    pub category: Option<Category>,
-    pub tag: Option<String>,
-    pub sort: Option<String>,
-    pub reverse: Option<bool>,
-    pub limit: Option<u64>,
-    pub offset: Option<i64>,
-    pub hashes: Option<Vec<String>>,
+	filter: Option<State>,
+	category: Option<Category>,
+	tag: Option<String>,
+	sort: Option<String>,
+	reverse: Option<bool>,
+	limit: Option<u64>,
+	offset: Option<i64>,
+	hashes: Option<Vec<String>>,
 }
 impl TorrentListGetConfigBuilder {
     /// ## Info

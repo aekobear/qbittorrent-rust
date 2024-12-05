@@ -18,15 +18,3 @@ impl Credentials {
         }
     }
 }
-
-#[cfg(test)]
-mod test {
-    use super::Credentials;
-
-    #[test]
-    fn test_creds() {
-        let s = Credentials::new(String::from("username"), String::from("username"));
-
-        println!("{:?}", s)
-    }
-}

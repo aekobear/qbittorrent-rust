@@ -6,7 +6,7 @@ use reqwest::header;
 use tokio::{fs::File, io::AsyncReadExt};
 
 use crate::{
-    core::api::QbitApi, code, error_handling::{errors::Error, error_type::ErrorType}, misc::sep_vec::SepVec
+    code, core::api::QbitApi, error_handling::{error_type::ErrorType, errors::Error}, misc::sep_vec::SepVec
 };
 
 use super::torrents::Torrent;
@@ -89,61 +89,82 @@ impl TorrentAddDescriptor {
 
 /// ## Info
 /// the builder struct for [`TorrentAddDescriptor`].
-/// 
+/// to have a description of what each setter does, look at the [qbittorrent documentation]()
 /// ## Usage
 /// call its methods and set the various fields.
 /// Once you're done, call `build()`
 /// 
 /// ## Warning
 /// - The `torrents` field is a vector, so it could be put as empty. Although, this isn't supported, and when `build()` is called, it will return an [`Error`] with error type: [`ErrorType::TorrentsNotSet`]
+/// 
+/// ## Fields:
+/// | Property                   | Type    | Description                                                                 |
+/// |----------------------------|---------|-----------------------------------------------------------------------------|
+/// | `torrents`                 | `Vec<Torrent>`     | A vector of [`Torrent`]. Represents the torrents to download.        |
+/// | `savepath`       |  `String`  | Download folder.                                                            |
+/// | `cookie`         |  `String`  | Cookie sent to download the .torrent file.                                  |
+/// | `category`       |  `String`  | Category for the torrent.                                                   |
+/// | `tags`           |  `Vec<String>`  | Tags for the torrent.                                         |
+/// | `skip_checking`  |  `Bool`  | Whether to skip hash checking. (default: false)|
+/// | `paused`         |  `Bool`  | Add torrents in the paused state. (default: false)|
+/// | `root_folder`    |  `Bool`  | Whether to create the root folder.|
+/// | `rename`         |  `String`  | Rename the torrents.                                                             |
+/// | `upLimit`        | `Integer` | Set torrent upload speed limit. Unit in bytes/second                       |
+/// | `dlLimit`        | `Integer` | Set torrent download speed limit. Unit in bytes/second                     |
+/// | `ratioLimit`  | `Float`   | Set torrent share ratio limit.                                              |
+/// | `seedingTimeLimit`  | `Integer` | Set torrent seeding time limit. Unit in minutes.                            |
+/// | `autoTMM`        | `Bool`    | Whether Automatic Torrent Management should be used. (default: false)                        |
+/// | `sequentialDownload`  |  `Bool`  | Enable sequential download. (default: false) |
+/// | `firstLastPiecePrio`  |  `Bool`  | Prioritize download first last piece. (default: false) |
 #[derive(Debug, Clone, Builder)]
 pub struct TorrentAddDescriptorBuilder {
-    pub torrents: Option<Vec<Torrent>>,
+    #[builder(custom)]
+    torrents: Option<Vec<Torrent>>,
 
     /// Download folder path
-    pub savepath: Option<String>,
+    savepath: Option<String>,
 
     /// Cookie sent to download the .torrent file
-    pub cookie: Option<String>,
+    cookie: Option<String>,
 
     /// Category for the torrent
-    pub category: Option<String>,
+    category: Option<String>,
 
     /// Tags for the torrent, separated by commas
-    pub tags: Option<Vec<String>>,
+    tags: Option<Vec<String>>,
 
     /// Skip hash checking (true, false)
-    pub skip_checking: Option<bool>,
+    skip_checking: Option<bool>,
 
     /// Add torrents in a paused state (true, false)
-    pub paused: Option<bool>,
+    paused: Option<bool>,
 
     /// Create the root folder (true, false, or unset)
-    pub root_folder: Option<bool>,
+    root_folder: Option<bool>,
 
     /// Rename the torrent
-    pub rename: Option<String>,
+    rename: Option<String>,
 
     /// Set torrent upload speed limit in bytes per second
-    pub up_limit: Option<u64>,
+    up_limit: Option<u64>,
 
     /// Set torrent download speed limit in bytes per second
-    pub dl_limit: Option<u64>,
+    dl_limit: Option<u64>,
 
     /// Set torrent share ratio limit (since qBittorrent v2.8.1)
-    pub ratio_limit: Option<f32>,
+    ratio_limit: Option<f32>,
 
     /// Set torrent seeding time limit in minutes (since qBittorrent v2.8.1)
-    pub seeding_time_limit: Option<u32>,
+    seeding_time_limit: Option<u32>,
 
     /// doc
-    pub auto_tmm: Option<bool>,
+    auto_tmm: Option<bool>,
 
     /// Enable sequential download (true, false)
-    pub sequential_download: Option<bool>,
+    sequential_download: Option<bool>,
 
     /// Prioritize first and last piece download (true, false)
-    pub first_last_piece_prio: Option<bool>,
+    first_last_piece_prio: Option<bool>,
 }
 impl TorrentAddDescriptorBuilder {
     ///## Info 

@@ -78,10 +78,3 @@ pub(crate) struct Cookie {
         Ok(())
     }
 }
-
-// #[tokio::test]
-// async fn test() {
-//     let api = Api::new("http://localhost:6011/", Credentials::new("admin", "123456")).await.unwrap();
-
-//     //println!("{:?}", api.cookie.clone().lock().await.cookie)
-// }

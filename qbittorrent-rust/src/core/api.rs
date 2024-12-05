@@ -12,14 +12,14 @@ use crate::error_handling::errors::Error;
 
 ///## Description
 /// the main struct of the library.
-/// each API-related method is listed as its category, followed by its name: `category` + `name_of_the_method` (eg: `torrents_add_torrent`). 
+/// each API-related method is listed as its category, followed by its name: `category` + `name_of_the_method`, in snake case. (eg: `torrents_add_torrent`). 
 /// For more info about categories, look at the main  description of the library.
 /// 
 /// ## Methods 
 /// Practically all methods that return some kind of response, return a json one;
 /// so as a rule of thumb:
-/// - if the method ends with `raw` it means it'll return the raw json [`String`] from the response.
-/// - if the method doesn't have anything at its end (or has `json` at the end, for cases where further clarity is needed), it'll return a serde_json [`Value`].
+/// - if the method ends with `raw`, it means it'll return the raw json [`String`] from the response.
+/// - if the method doesn't have anything at its end, (or has `json` at the end, for cases where further clarity is needed), it'll return a serde_json [`Value`].
 /// - if it ends in any other way, it returns a custom type that represents that json (or parts of it) in a particular way.
 #[derive(Debug, Clone)]
 pub struct QbitApi {

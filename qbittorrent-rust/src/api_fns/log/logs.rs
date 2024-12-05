@@ -47,12 +47,21 @@ impl GetLogConfig {
 #[derive(Builder)]
 /// ## Info
 /// Builder struct for [`GetLogConfig`].
+/// 
+/// ## Fields
+/// | Parameter         | Type    | Description                                                            |
+/// |-------------------|---------|------------------------------------------------------------------------|
+/// | `normal`          | `Bool`    | Include normal messages (default: `true`)                              |
+/// | `info`            | `Bool`    | Include info messages (default: `true`)                                |
+/// | `warning`         | `Bool`    | Include warning messages (default: `true`)                             |
+/// | `critical`        | `Bool`    | Include critical messages (default: `true`)                            |
+/// | `last_known_id`   | `Integer` | Exclude messages with "message id" lower or equal `last_known_id` (default: `-1`)  |
 pub struct GetLogConfigBuilder {
-    pub normal: Option<bool>,
-    pub info: Option<bool>,
-    pub warning: Option<bool>,
-    pub critical: Option<bool>,
-    pub last_known_id: Option<i64>,
+	normal: Option<bool>,
+	info: Option<bool>,
+	warning: Option<bool>,
+	critical: Option<bool>,
+	last_known_id: Option<i64>,
 }
 impl GetLogConfigBuilder {
     /// ## Usage

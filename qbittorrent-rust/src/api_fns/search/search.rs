@@ -94,6 +94,7 @@ pub enum SearchPluginsDescriptor {
     Custom(Vec<SearchPlugin>),
 }
 impl SearchPluginsDescriptor {
+    #[allow(dead_code)]
     pub(crate) fn get_inner(&self) -> Vec<SearchPlugin> {
         match self {
             SearchPluginsDescriptor::All => {

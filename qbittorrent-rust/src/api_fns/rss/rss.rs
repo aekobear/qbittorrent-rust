@@ -34,21 +34,38 @@ pub struct RssAutoDownloadRule {
 
 /// ## Info
 /// Builder struct for [`RssAutoDownloadRule`].
+/// 
+/// ## Fields
+/// | Field                     | Type     | Description                                                        |
+/// |---------------------------|----------|--------------------------------------------------------------------|
+/// | `enabled`                 | `Bool`     | Whether the rule is enabled                                        |
+/// | `mustContain`             | `String`   | The substring that the torrent name must contain                   |
+/// | `mustNotContain`          | `String`   | The substring that the torrent name must not contain               |
+/// | `useRegex`                | `Bool`     | Enable regex mode in "mustContain" and "mustNotContain"             |
+/// | `episodeFilter`           | `String`   | Episode filter definition                                          |
+/// | `smartFilter`             | `Bool`     | Enable smart episode filter                                        |
+/// | `previouslyMatchedEpisodes` | `Vec<String>`   | The list of episode IDs already matched by smart filter            |
+/// | `affectedFeeds`           | `Vec<String>`     | The feed URLs the rule applied to                                   |
+/// | `ignoreDays`              | `Integer`   | Ignore subsequent rule matches                                     |
+/// | `lastMatch`               | `String`   | The rule last match time                                           |
+/// | `addPaused`               | `Bool`     | Add matched torrent in paused mode                                 |
+/// | `assignedCategory`        | `String`   | Assign category to the torrent                                     |
+/// | `savePath`                | `String`   | Save torrent to the given directory
 #[derive(Debug, Clone, Builder)]
 pub struct RssAutoDownloadRuleBuilder{
-    pub enabled: Option<bool>,
-    pub must_contain: Option<String>,
-    pub must_not_contain: Option<String>,
-    pub use_regex: Option<bool>,
-    pub episode_filter: Option<String>,
-    pub smart_filter: Option<bool>,
-    pub previously_matched_episodes: Option<Vec<String>>,
-    pub affected_feeds: Option<Vec<String>>,
-    pub ignore_days: Option<usize>,
-    pub last_match: Option<String>,
-    pub add_paused: Option<bool>,
-    pub assigned_category: Option<String>,
-    pub save_path: Option<String>,
+    enabled: Option<bool>,
+	must_contain: Option<String>,
+	must_not_contain: Option<String>,
+	use_regex: Option<bool>,
+	episode_filter: Option<String>,
+	smart_filter: Option<bool>,
+	previously_matched_episodes: Option<Vec<String>>,
+	affected_feeds: Option<Vec<String>>,
+	ignore_days: Option<usize>,
+	last_match: Option<String>,
+	add_paused: Option<bool>,
+	assigned_category: Option<String>,
+	save_path: Option<String>,
 } impl RssAutoDownloadRuleBuilder {
     /// ## Usage
     /// Creates a new blank instance of [`RssAutoDownloadRuleBuilder`].
