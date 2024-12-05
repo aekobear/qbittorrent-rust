@@ -767,7 +767,6 @@ dependencies = [
 name = "qbittorrent_rust"
 version = "0.1.0"
 dependencies = [
- "proc_macros",
  "reqwest",
  "serde",
  "serde_json",
