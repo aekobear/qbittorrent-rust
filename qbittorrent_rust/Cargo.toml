@@ -6,7 +6,7 @@ description = "An asynchronous library to interface with the qbittorrent WeBUI A
 license = "MIT"
 readme = "../README.md"
 repository = "https://github.com/confused-ace-noises/qbittorrent-rust"
-keywords = ["qbit", "qbittorrent", "torrent", "torrents", "bittorrent", "api"]
+keywords = ["qbit", "qbittorrent", "torrent", "torrents", "bittorrent"]
 categories = ["asynchronous", "api-bindings"]
 
 [dependencies]
