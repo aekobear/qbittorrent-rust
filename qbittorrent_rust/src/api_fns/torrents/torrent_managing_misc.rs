@@ -282,13 +282,16 @@ impl QbitApi {
         let hashes: TorrentHashesDesc = hashes.borrow().clone();
         let hashes_str = hashes.get_string("|");
 
-        let url = url!(
-            "/torrents/delete",
-            ("hashes", Some(hashes_str)),
-            ("deleteFiles", Some(delete_files))
-        );
+        let url = String::from("/torrents/delete");
 
-        self.make_request(url, stringify!($func_name))
+        self.make_request_with_form(
+                url,
+                stringify!($func_name),
+                HashMap::from([
+                    ("hashes", Some(hashes_str)),
+                    ("deleteFiles", Some(delete_files.to_string()))
+                ])
+            )
             .await
             .map_err(|e| Error::build(ErrorType::ReqwestError(Box::new(e)), None))?;
 
